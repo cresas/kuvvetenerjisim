@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuvvet-Yer Değiştirme Simülasyonu</title>
+    <meta name="description" content="Fizik simülasyonu - Sabit kuvvet etkisindeki cismin hareketini analiz edin">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        :root {
+            --background: 240 10% 98%;
+            --foreground: 220 15% 20%;
+            --card: 0 0% 100%;
+            --card-foreground: 220 15% 20%;
+            --primary: 210 95% 48%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 220 15% 20%;
+            --muted: 220 13% 95%;
+            --muted-foreground: 220 10% 50%;
+            --accent: 200 95% 95%;
+            --accent-foreground: 210 95% 35%;
+            --destructive: 0 65% 55%;
+            --destructive-foreground: 0 0% 100%;
+            --warning: 38 95% 55%;
+            --warning-foreground: 0 0% 100%;
+            --success: 145 65% 45%;
+            --success-foreground: 0 0% 100%;
+            --simulation-bg: 200 40% 92%;
+            --info-panel: 210 100% 97%;
+            --chart-bg: 0 0% 100%;
+            --border: 220 13% 88%;
+            --input: 220 13% 95%;
+            --ring: 210 95% 48%;
+            --radius: 0.5rem;
+            --chart-grid-color-light: 220 13% 88%;
+            --chart-text-color-light: 220 15% 20%;
+            --toggle-color: #fcd34d;
+            /* Hover Parlaklık Rengi (Açık Tema) */
+            --hover-glow: 200 95% 65%; /* Bright Cyan/Blue */
+        }
+
+        .dark {
+            --background: 220 20% 12%;
+            --foreground: 210 40% 98%;
+            --card: 220 18% 16%;
+            --card-foreground: 210 40% 98%;
+            --primary: 210 95% 55%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 220 15% 22%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 220 15% 22%;
+            --muted-foreground: 220 10% 70%;
+            --accent: 210 95% 22%;
+            --accent-foreground: 210 95% 90%;
+            --destructive: 0 65% 55%;
+            --destructive-foreground: 0 0% 100%;
+            --warning: 38 95% 55%;
+            --warning-foreground: 0 0% 100%;
+            --success: 145 65% 45%;
+            --success-foreground: 0 0% 100%;
+            --simulation-bg: 220 18% 20%;
+            --info-panel: 220 18% 18%;
+            --chart-bg: 210 20% 14%;
+            --border: 220 15% 25%;
+            --input: 220 15% 22%;
+            --ring: 210 95% 55%;
+            --chart-grid-color-dark: 220 15% 25%;
+            --chart-text-color-dark: 210 40% 98%;
+            --toggle-color: #f59e0b;
+            /* Hover Parlaklık Rengi (Koyu Tema) */
+            --hover-glow: 200 95% 75%; /* Brighter Cyan/Blue for dark mode */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden; 
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+            transition: background 0.3s ease, color 0.3s ease;
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            flex-shrink: 0;
+            padding: 0.75rem 1rem;
+            background: hsl(var(--card));
+            border-bottom: 1px solid hsl(var(--border));
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .header-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: hsl(var(--foreground));
+        }
+
+        .theme-toggle {
+            padding: 0.5rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: 50%;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background: hsl(var(--muted));
+        }
+
+        #themeIcon {
+            color: var(--toggle-color);
+        }
+
+        .info-box {
+            background: hsl(var(--info-panel));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 0.5rem 0.75rem;
+        }
+
+        .info-text {
+            font-size: 0.8rem;
+            color: hsl(var(--muted-foreground));
+            line-height: 1.4;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            flex-shrink: 0;
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* KART TEMEL STİLLERİ ve HOVER GEÇİŞİ */
+        .panel-card,
+        .canvas-container,
+        .chart-container,
+        .data-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            
+            /* HOVER GEÇİŞİ */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* GÜNCELLENDİ: HOVER ETKİSİ (SPACE Görünüm) */
+        .panel-card:hover,
+        .canvas-container:hover,
+        .chart-container:hover,
+        .data-card:hover {
+            /* Hafifçe yukarı kalkma */
+            transform: translateY(-0px) scale(1.00); /* scale(1.00*) isteği uygulandı */
+            /* Parlak mavi/cyan dış gölge (Uzaylı efekti) */
+            border-color: hsl(var(--hover-glow)); 
+            box-shadow: 
+                0 6px 20px hsla(var(--foreground) / 0.15), /* Genel gölge */
+                0 0 16px hsla(var(--hover-glow) / 0.15);   /* Parlak dış ışık (Opaklık 0.15'e düşürüldü) */
+        }
+        
+        .panel-card {
+            /* Özelleştirme: Kontrol Paneli Kartı */
+            padding: 1rem; 
+            gap: 0.75rem;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: hsl(var(--card-foreground));
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .title-accent {
+            width: 3px;
+            height: 1.25rem;
+            background: hsl(var(--primary));
+            border-radius: 2px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: hsl(var(--card-foreground));
+        }
+
+        .form-input {
+            padding: 0.5rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius) - 2px);
+            background: hsl(var(--input));
+            color: hsl(var(--foreground));
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: hsl(var(--ring));
+            box-shadow: 0 0 0 2px hsla(var(--ring) / 0.2);
+        }
+
+        .form-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: calc(var(--radius) - 2px);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* YENİ: Buton geçişi */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+            filter: none !important;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        /* GÜNCELLENDİ: Buton Hover Efektleri */
+        .btn-primary {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 4px 10px hsla(var(--primary) / 0.5), 
+                0 0 8px hsla(var(--hover-glow) / 0.7); /* Güçlü Mavi glow */
+            filter: brightness(1.05); /* Hafif parlaklık artışı */
+        }
+
+        .btn-warning {
+            background: hsl(var(--warning));
+            color: hsl(var(--warning-foreground));
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px hsla(var(--warning) / 0.4);
+            filter: brightness(1.05);
+        }
+
+        .btn-danger {
+            background: hsl(var(--destructive));
+            color: hsl(var(--destructive-foreground));
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px hsla(var(--destructive) / 0.4);
+            filter: brightness(1.05);
+        }
+
+        .btn-secondary {
+            background: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            border: 1px solid hsl(var(--border));
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: hsl(var(--muted));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px hsla(var(--foreground) / 0.08);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            gap: 1rem;
+        }
+
+        .simulation-section {
+            flex: 1;
+            display: flex;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        .simulation-main {
+            flex-grow: 1;
+            flex-shrink: 1;
+            flex-basis: 75px; 
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        /* Canvas Container: Sabit Yükseklik */
+        .canvas-container {
+            flex-grow: 0;
+            flex-shrink: 0;
+            height: 250px; 
+            
+            /* Hover efekti için padding 1rem yeterli */
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        /* Canvas Wrapper: Canvas'ın kendisi */
+        .canvas-wrapper {
+            flex: 1; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: hsl(var(--simulation-bg));
+            border-radius: calc(var(--radius) - 2px);
+            width: 100%;
+            height: 100%; 
+        }
+
+        /* Canvas: Kapsayıcının Tam Boyutunu Almalı */
+        .canvas {
+            display: block;
+            width: 100%;
+            height: 100%; 
+        }
+
+        .canvas-description {
+            flex-shrink: 0; 
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            font-size: 0.75rem;
+            color: hsl(var(--muted-foreground));
+            text-align: center;
+            border-top: 1px dashed hsl(var(--border)); 
+        }
+
+        .chart-container {
+            flex-grow: 1.5; 
+            flex-shrink: 1;
+            flex-basis: auto; 
+            
+            /* Hover efekti için padding 1rem yeterli */
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            gap: 0; /* İçeriği esnetmek için */
+        }
+
+        .chart-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: hsl(var(--card-foreground));
+            margin-bottom: 0.75rem;
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .data-display {
+            flex-shrink: 0;
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+        }
+
+        .data-card {
+            /* Hover efekti için padding 0.75rem yeterli */
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            cursor: default; /* Kartların üzerine gelindiğinde imleç varsayılan kalmalı */
+        }
+
+        .data-card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: hsl(var(--card-foreground));
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+            padding-bottom: 0.35rem;
+            border-bottom: 1px solid hsl(var(--border) / 0.5);
+        }
+
+        .data-accent {
+            width: 3px;
+            height: 0.9rem;
+            background: hsl(var(--primary));
+            border-radius: 2px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 0.75rem;
+            gap: 0.5rem;
+            padding: 0.15rem 0;
+        }
+
+        .data-label {
+            color: hsl(var(--muted-foreground));
+            font-weight: 500;
+            font-size: 0.72rem;
+        }
+
+        .data-value {
+            font-weight: 700;
+            white-space: nowrap;
+            font-size: 0.78rem;
+        }
+
+        .data-value small {
+            font-size: 0.68rem;
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        .color-red { color: #ef4444; }
+        .color-blue { color: #3b82f6; }
+        .color-green { color: #10b981; }
+        .color-purple { color: #a855f7; }
+        .color-orange { color: #f97316; }
+        .color-cyan { color: #06b6d4; }
+        .color-pink { color: #ec4899; }
+        .color-success { color: hsl(var(--success)); }
+
+        .charts-grid {
+            flex: 0.75; 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        /* Modal (Veri Tablosu) Stilleri - Değişiklik Yok */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: hsl(var(--card));
+            border-radius: var(--radius);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid hsl(var(--border));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: hsl(var(--card-foreground));
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close-btn {
+            color: hsl(var(--muted-foreground));
+            font-size: 2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: color 0.2s;
+            background: none;
+            border: none;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: hsl(var(--destructive));
+        }
+
+        .modal-body {
+            overflow: hidden; 
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column; 
+        }
+
+        #modalTableContainer {
+            flex-grow: 1;
+            overflow-y: auto; 
+            max-height: 100%; 
+        }
+        
+        .modal-footer {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid hsl(var(--border));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            background-color: hsl(var(--card));
+            gap: 1rem;
+        }
+        
+        .page-info {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: hsl(var(--muted-foreground));
+            flex-grow: 1;
+            text-align: center;
+        }
+        /* Tablo Stilleri */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid hsl(var(--border));
+        }
+
+        .table th {
+            position: sticky;
+            top: 0;
+            background: hsl(var(--muted));
+            color: hsl(var(--card-foreground));
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .table tr:hover {
+            background: hsl(var(--muted) / 0.5);
+        }
+
+        .empty-state {
+            padding: 3rem 1rem !important;
+            text-align: center;
+            color: hsl(var(--muted-foreground));
+        }
+
+        .empty-icon {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-text {
+            font-size: 0.85rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .control-panel {
+                width: 100%;
+                overflow-y: visible;
+            }
+
+            .content-area {
+                overflow: visible;
+            }
+            
+            .canvas-container {
+                height: 250px; 
+            }
+
+            .simulation-section {
+                flex-direction: column;
+                overflow: visible;
+                display: flex; 
+            }
+
+            .simulation-main {
+                order: 1 !important; 
+                width: 100%; 
+                flex-grow: 1;
+				overflow : visible;
+            }
+
+            .data-display {
+                order: 2 !important; 
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto; 
+                overflow-y: visible;
+                padding: 0.75rem 0;
+            }
+
+            /* Mobil cihazlarda hover efektini kaldır */
+            .panel-card:hover,
+            .canvas-container:hover,
+            .chart-container:hover,
+            .data-card:hover {
+                transform: none; 
+                box-shadow: none; 
+            }
+            
+            .btn:hover:not(:disabled) {
+                transform: none;
+                box-shadow: none;
+                filter: none;
+            }
+
+            .data-card {
+                min-width: 200px;
+                margin-right: 0.5rem; 
+            }
+
+            .charts-grid {
+                flex: initial; 
+                grid-template-columns: 1fr;
+                overflow: visible;
+            }
+
+            .simulation-main .chart-container {
+                flex-grow: 1; 
+            }
+
+            .canvas-wrapper {
+                min-height: 180px; 
+            }
+
+            .chart-wrapper {
+                min-height: 200px;
+            }
+
+            .title {
+                font-size: 1rem;
+            }
+
+            .info-text {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                padding: 0.5rem;
+            }
+
+            .main-content {
+                padding: 0.5rem;
+                gap: 0.5rem;
+            }
+
+            .simulation-section,
+            .charts-grid,
+            .button-group {
+                gap: 0.5rem;
+            }
+
+            .panel-card,
+            .canvas-container,
+            .chart-container,
+            .data-card {
+                padding: 0.75rem;
+            }
+
+            .title {
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: hsl(var(--muted));
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: hsl(var(--muted-foreground) / 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: hsl(var(--muted-foreground) / 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-title">
+                <h1 class="title">Kuvvet-Yer Değiştirme Simülasyonu</h1>
+                <button class="theme-toggle" id="themeToggle" title="Tema Değiştir">
+                    <span class="material-icons" id="themeIcon">dark_mode</span>
+                </button>
+            </div>
+            <div class="info-box">
+                <p class="info-text">
+                    <strong>Not:</strong> Bu simülasyon, sabit kuvvet etkisindeki bir cismin yatay doğrultudaki hareketini analiz etmek için hazırlanmıştır.
+                </p>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="panel-card">
+                    <h2 class="panel-title">
+                        <div class="title-accent"></div>
+                        Simülasyon Parametreleri
+                    </h2>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="mass">Kütle (kg):</label>
+                        <input type="number" id="mass" class="form-input" value="2" min="0.1" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="force">Kuvvet (N):</label>
+                        <input type="number" id="force" class="form-input" value="10" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="initialVelocity">İlk Hız (m/s):</label>
+                        <input type="number" id="initialVelocity" class="form-input" value="0" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="duration">Süre (s):</label>
+                        <input type="number" id="duration" class="form-input" value="5" min="0.1" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="dataInterval">Veri Kayıt Aralığı (s):</label>
+                        <input type="number" id="dataInterval" class="form-input" value="0.2" min="0.1" step="0.1">
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="startBtn">
+                            <span class="material-icons">play_arrow</span>
+                            Başlat
+                        </button>
+                        
+                        <button class="btn btn-warning" id="pauseBtn" disabled>
+                            <span class="material-icons">pause</span>
+                            Duraklat
+                        </button>
+                        
+                        <button class="btn btn-danger" id="resetBtn">
+                            <span class="material-icons">refresh</span>
+                            Sıfırla
+                        </button>
+                        
+                        <button class="btn btn-secondary" id="openTableBtn">
+                            <span class="material-icons">table_chart</span>
+                            Veri Tablosu
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div class="simulation-section">
+                    <div class="simulation-main">
+                        <div class="canvas-container">
+                            <div class="canvas-wrapper">
+                                <canvas id="simulationCanvas" class="canvas"></canvas>
+                            </div>
+                            <p class="canvas-description">Sağa doğru pozitif yön kabul edilmiştir.</p>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3 class="chart-title">Konum - Zaman Grafiği</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="positionChart" class="chart-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-display">
+                        <div class="data-card">
+                            <h3 class="data-card-title">
+                                <div class="data-accent"></div>
+                                Anlık Değerler
+                            </h3>
+                            <div id="liveData"></div>
+                        </div>
+                        
+                        <div class="data-card">
+                            <h3 class="data-card-title">
+                                <div class="data-accent"></div>
+                                Son Değerler
+                            </h3>
+                            <div id="finalData"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container" style="flex-grow: 1; flex-basis: 0;">
+                        <h3 class="chart-title">Hız - Zaman Grafiği</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="velocityChart" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container" style="flex-grow: 1; flex-basis: 0;">
+                        <h3 class="chart-title">Kuvvet - Yer Değiştirme Grafiği</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="forceChart" class="chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="dataTableModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span class="material-icons" style="color: hsl(var(--primary));">list_alt</span>
+                    Kaydedilen Veriler Tablosu
+                </h3>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalTableContainer">
+                    <table class="table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Zaman (s)</th>
+                                <th>Konum (m)</th>
+                                <th>Hız (m/s)</th>
+                                <th>İvme (m/s²)</th>
+                                <th>Kuvvet (N)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p class="empty-title">Henüz veri kaydedilmedi</p>
+                                    <p class="empty-text">Simülasyonu başlatarak veri kaydetmeye başlayın</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" id="modalFooter" style="display: none;">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const ROWS_PER_PAGE = 20; 
+        let currentPage = 1; 
+
+        let isRunning = false;
+        let isPaused = false;
+        let currentTime = 0;
+        let recordedData = [];
+        let animationFrame = null;
+        let startTime = 0;
+        let pausedTime = 0;
+        let lastRecordTime = 0;
+
+        const massInput = document.getElementById('mass');
+        const forceInput = document.getElementById('force');
+        const initialVelocityInput = document.getElementById('initialVelocity');
+        const durationInput = document.getElementById('duration');
+        const dataIntervalInput = document.getElementById('dataInterval');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const openTableBtn = document.getElementById('openTableBtn');
+        const dataTableModal = document.getElementById('dataTableModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalFooter = document.getElementById('modalFooter'); 
+
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const positionChartCanvas = document.getElementById('positionChart');
+        const velocityChartCanvas = document.getElementById('velocityChart');
+        const forceChartCanvas = document.getElementById('forceChart');
+
+        let positionChart, velocityChart, forceChart;
+
+        function getCssVar(name) {
+            const style = getComputedStyle(document.documentElement);
+            const value = style.getPropertyValue(name).trim();
+            if (value.startsWith('hsl')) return value;
+            if (value.includes(' ') && !value.includes('hsl')) return `hsl(${value})`;
+            return value;
+        }
+
+        function getChartColors() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = getCssVar(isDark ? '--chart-grid-color-dark' : '--chart-grid-color-light');
+            const textColor = getCssVar(isDark ? '--chart-text-color-dark' : '--chart-text-color-light');
+            const tooltipBg = getCssVar('--card');
+            const tooltipFg = getCssVar('--foreground');
+            const tooltipBorder = getCssVar('--border');
+            return { gridColor, textColor, tooltipBg, tooltipFg, tooltipBorder };
+        }
+
+        function initCharts() {
+            const { gridColor, textColor, tooltipBg, tooltipFg, tooltipBorder } = getChartColors();
+            
+            function createChart(canvas, label, dataColor, chartType, xTitle, yTitle, dataLabels, dataValues, xLabelText, yLabelText) {
+                if (canvas.chart) canvas.chart.destroy();
+                
+                const tooltipCallbacks = {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) label += ': ';
+                        if (context.parsed.y !== null) {
+                            label += context.parsed.y.toFixed(2) + ' ' + yLabelText;
+                        }
+                        return label;
+                    },
+                    title: function(context) {
+                        if (context[0].parsed.x !== null) {
+                            return xLabelText + ': ' + context[0].parsed.x.toFixed(2);
+                        }
+                        return '';
+                    }
+                };
+                
+                if (yLabelText === '(N)') {
+                    tooltipCallbacks.title = function(context) {
+                        if (context[0].parsed.x !== null) {
+                            return 'Yer Değiştirme (m): ' + context[0].parsed.x.toFixed(2);
+                        }
+                        return '';
+                    };
+                }
+
+                const config = {
+                    type: chartType,
+                    data: {
+                        labels: dataLabels,
+                        datasets: [{
+                            label: label,
+                            data: dataValues,
+                            borderColor: dataColor,
+                            backgroundColor: dataColor,
+                            borderWidth: 2.5,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            fill: false,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: tooltipBg,
+                                titleColor: tooltipFg,
+                                bodyColor: tooltipFg,
+                                borderColor: tooltipBorder,
+                                borderWidth: 1,
+                                callbacks: tooltipCallbacks
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: gridColor },
+                                ticks: { 
+                                    color: textColor,
+                                    maxRotation: 0, 
+                                    minRotation: 0,
+                                    padding: 10 
+                                },
+                                title: {
+                                    display: true,
+                                    text: xTitle,
+                                    color: textColor,
+                                    font: { size: 12, weight: 500 },
+                                    padding: { top: 15 } 
+                                }
+                            },
+                            y: {
+                                grid: { color: gridColor },
+                                ticks: { color: textColor },
+                                title: {
+                                    display: true,
+                                    text: yTitle,
+                                    color: textColor,
+                                    font: { size: 12, weight: 500 }
+                                }
+                            }
+                        }
+                    }
+                };
+                
+                const chartInstance = new Chart(canvas, config);
+                canvas.chart = chartInstance;
+                return chartInstance;
+            }
+
+            const posLabels = positionChart ? positionChart.data.labels : [];
+            const posData = positionChart ? positionChart.data.datasets[0].data : [];
+            // Konum-Zaman Grafiği
+            positionChart = createChart(positionChartCanvas, 'Konum (m)', '#ef4444', 'line', 'Zaman (s)', 'Konum (m)', posLabels, posData, 'Zaman (s)', '(m)');
+
+            const velLabels = velocityChart ? velocityChart.data.labels : [];
+            const velData = velocityChart ? velocityChart.data.datasets[0].data : [];
+            // Hız-Zaman Grafiği
+            velocityChart = createChart(velocityChartCanvas, 'Hız (m/s)', '#3b82f6', 'line', 'Zaman (s)', 'Hız (m/s)', velLabels, velData, 'Zaman (s)', '(m/s)');
+
+            const forceLabels = forceChart ? forceChart.data.labels : [];
+            const forceData = forceChart ? forceChart.data.datasets[0].data : [];
+            // Kuvvet-Yer Değiştirme Grafiği
+            forceChart = createChart(forceChartCanvas, 'Kuvvet (N)', '#10b981', 'line', 'Yer Değiştirme (m)', 'Kuvvet (N)', forceLabels, forceData, 'Yer Değiştirme (m)', '(N)');
+        }
+
+        function calculateValues(t) {
+            const mass = parseFloat(massInput.value) || 0;
+            const force = parseFloat(forceInput.value) || 0;
+            const initialVelocity = parseFloat(initialVelocityInput.value) || 0;
+            const acceleration = mass > 0 ? force / mass : 0;
+            
+            const velocity = initialVelocity + acceleration * t;
+            const position = initialVelocity * t + 0.5 * acceleration * t * t;
+            const kineticEnergy = 0.5 * mass * velocity * velocity;
+            const work = force * position;
+            
+            return { position, velocity, acceleration, kineticEnergy, work };
+        }
+
+        function updateCanvas(position, maxDistance) {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = isDark ? '#2c3444' : '#d4e7ed';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Zemin çizgisi: Canvas'ın altından 50 piksel yukarıya çizilir
+            const groundY = canvas.height - 50;
+
+            ctx.strokeStyle = isDark ? '#60a5fa' : '#1e40af';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(canvas.width, groundY);
+            ctx.stroke();
+
+            // Kenar boşlukları ve kullanılabilir alan
+            const paddingX = 40;
+            const availableWidth = canvas.width - (2 * paddingX);
+            const minX = paddingX;
+            const maxX = canvas.width - paddingX;
+
+            // Mesafe İşaretçileri
+            ctx.fillStyle = isDark ? '#94a3b8' : '#475569';
+            ctx.font = 'bold 12px Arial, sans-serif';
+
+            // Ölçeği dinamik hale getir
+            const scaleDistance = maxDistance > 0 ? maxDistance : 1; 
+
+            // İşaretçi değerlerini dinamik olarak hesapla
+            let markerInterval = 10;
+            if (scaleDistance <= 5) markerInterval = 1;
+            else if (scaleDistance <= 15) markerInterval = 2;
+            else if (scaleDistance <= 30) markerInterval = 5;
+            else if (scaleDistance <= 100) markerInterval = 10;
+            else markerInterval = 20;
+
+            let currentMarker = 0;
+            while (currentMarker <= scaleDistance + markerInterval) {
+                const markerX = minX + (currentMarker / scaleDistance) * availableWidth;
+                
+                if (markerX > maxX + 5) break; 
+
+                const markerText = `${currentMarker.toFixed(0)} m`;
+                ctx.fillText(markerText, markerX - (ctx.measureText(markerText).width / 2), groundY - 25);
+                ctx.strokeStyle = isDark ? '#475569' : '#94a3b8';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(markerX, groundY);
+                ctx.lineTo(markerX, groundY - 10);
+                ctx.stroke();
+
+                currentMarker += markerInterval;
+            }
+
+            // Başlangıç/Bitiş etiketleri
+            ctx.fillStyle = isDark ? '#f1f5f9' : '#1e293b';
+            ctx.font = 'bold 14px Arial, sans-serif';
+            
+            const textY = 20; 
+            
+            ctx.fillText('Başlangıç (0 m)', minX, textY);
+            ctx.fillText(`Bitiş (${scaleDistance.toFixed(2)} m)`, maxX - 100, textY);
+
+
+            // Hareketli ana top için boyutlar
+            const ballRadius = 16;
+            
+            // Hareketli ana topun konumu
+            let normalizedPosition = position / scaleDistance;
+            if (normalizedPosition > 1) normalizedPosition = 1; 
+            
+            const ballX = minX + normalizedPosition * availableWidth;
+            // ❗ 2 cm (yaklaşık 20 piksel) yukarı kaydırma
+            const ballY = groundY - ballRadius - 60; 
+
+            // Gölge
+            ctx.beginPath();
+            ctx.ellipse(ballX, groundY + 5, ballRadius * 0.9, 5, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.fill();
+
+            // Ana top (kırmızı)
+            const gradient = ctx.createRadialGradient(ballX - 5, ballY - 5, 2, ballX, ballY, ballRadius);
+            gradient.addColorStop(0, '#fca5a5');
+            gradient.addColorStop(1, '#dc2626');
+            
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.strokeStyle = '#991b1b';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Parlaklık efekti
+            ctx.beginPath();
+            ctx.arc(ballX - 1, ballY - 1, 4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fill();
+        }
+
+        function updateDataDisplay() {
+            const values = calculateValues(currentTime);
+            const duration = parseFloat(durationInput.value) || 5;
+            const finalValues = calculateValues(duration);
+            
+            const liveDataDiv = document.getElementById('liveData');
+            liveDataDiv.innerHTML = `
+                <div class="data-row">
+                    <span class="data-label">Konum:</span>
+                    <span class="data-value color-red">${values.position.toFixed(2)} <small>m</small></span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Hız:</span>
+                    <span class="data-value color-blue">${values.velocity.toFixed(2)} <small>m/s</small></span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">İvme:</span>
+                    <span class="data-value color-green">${values.acceleration.toFixed(2)} <small>m/s²</small></span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Kuvvet:</span>
+                    <span class="data-value color-purple">${(parseFloat(forceInput.value) || 0).toFixed(2)} <small>N</small></span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Zaman:</span>
+                    <span class="data-value color-orange">${currentTime.toFixed(2)} <small>s</small></span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Yapılan İş:</span>
+                    <span class="data-value color-cyan">${values.work.toFixed(2)} <small>J</small></span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Kinetik Enerji:</span>
+                    <span class="data-value color-pink">${values.kineticEnergy.toFixed(2)} <small>J</small></span>
+                </div>
+            `;
+
+            const finalDataDiv = document.getElementById('finalData');
+            finalDataDiv.innerHTML = `
+                <div class="data-row">
+                    <span class="data-label">Toplam Yer Değiştirme:</span>
+                    <span class="data-value color-success">${finalValues.position.toFixed(2)} <small>m</small></span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Son Hız:</span>
+                    <span class="data-value color-success">${finalValues.velocity.toFixed(2)} <small>m/s</small></span>
+                </div>
+            `;
+        }
+        
+        function renderPagination(totalRows) {
+            const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE);
+            
+            if (totalPages <= 1) {
+                modalFooter.style.display = 'none';
+                return;
+            }
+
+            modalFooter.style.display = 'flex';
+            modalFooter.innerHTML = `
+                <button class="btn btn-secondary btn-sm" id="prevPageBtn" ${currentPage === 1 ? 'disabled' : ''}>
+                    <span class="material-icons">chevron_left</span> Önceki
+                </button>
+                <span class="page-info">
+                    Sayfa ${currentPage} / ${totalPages} (${totalRows} Kayıt)
+                </span>
+                <button class="btn btn-secondary btn-sm" id="nextPageBtn" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Sonraki <span class="material-icons">chevron_right</span>
+                </button>
+            `;
+
+            document.getElementById('prevPageBtn').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
+                }
+            });
+            
+            document.getElementById('nextPageBtn').addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateTable();
+                }
+            });
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById('tableBody');
+            const totalRows = recordedData.length;
+            const totalPages = Math.ceil(totalRows / ROWS_PER_PAGE);
+            const modalTableContainer = document.getElementById('modalTableContainer');
+            
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+            } else if (totalPages === 0) {
+                currentPage = 1;
+            }
+            
+            if (totalPages > 1) {
+                modalTableContainer.style.overflowY = 'hidden'; 
+            } else {
+                modalTableContainer.style.overflowY = 'auto'; 
+            }
+            
+            renderPagination(totalRows);
+
+            if (totalRows === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p class="empty-title">Henüz veri kaydedilmedi</p>
+                            <p class="empty-text">Simülasyonu başlatarak veri kaydetmeye başlayın</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+                const endIndex = startIndex + ROWS_PER_PAGE;
+                const paginatedData = recordedData.slice(startIndex, endIndex);
+
+                tableBody.innerHTML = paginatedData.map(row => `
+                    <tr>
+                        <td>${row.time.toFixed(2)}</td>
+                        <td>${row.position.toFixed(2)}</td>
+                        <td>${row.velocity.toFixed(2)}</td>
+                        <td>${row.acceleration.toFixed(2)}</td>
+                        <td>${row.force.toFixed(2)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function updateCharts() {
+            if (positionChart) positionChart.update();
+            if (velocityChart) velocityChart.update();
+            if (forceChart) forceChart.update();
+        }
+
+        function animate() {
+            if (!isRunning || isPaused) return;
+
+            const timestamp = Date.now();
+            
+            if (!startTime) startTime = timestamp;
+
+            const elapsed = (timestamp - startTime + pausedTime) / 1000;
+            const duration = parseFloat(durationInput.value) || 5;
+            
+            const finalValues = calculateValues(duration); 
+
+            if (elapsed >= duration) {
+                currentTime = duration;
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                
+                const finalPosition = finalValues.position;
+                updateCanvas(finalPosition, finalValues.position);
+                updateDataDisplay();
+                return;
+            }
+
+            currentTime = elapsed;
+
+            const dataInterval = parseFloat(dataIntervalInput.value) || 0.2;
+            if (elapsed - lastRecordTime >= dataInterval) {
+                const values = calculateValues(elapsed);
+                const newDataPoint = {
+                    time: elapsed,
+                    position: values.position,
+                    velocity: values.velocity,
+                    force: parseFloat(forceInput.value) || 0,
+                    acceleration: values.acceleration
+                };
+                recordedData.push(newDataPoint);
+                lastRecordTime = elapsed;
+                
+                positionChart.data.labels = recordedData.map(d => d.time);
+                positionChart.data.datasets[0].data = recordedData.map(d => d.position);
+                velocityChart.data.labels = recordedData.map(d => d.time);
+                velocityChart.data.datasets[0].data = recordedData.map(d => d.velocity);
+                forceChart.data.labels = recordedData.map(d => d.position);
+                forceChart.data.datasets[0].data = recordedData.map(d => d.force);
+                
+                updateTable();
+                updateCharts();
+            }
+
+            const values = calculateValues(currentTime);
+            updateCanvas(values.position, finalValues.position);
+            updateDataDisplay();
+
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (!isRunning) {
+                isRunning = true;
+                isPaused = false;
+                currentPage = 1; 
+                currentTime = 0;
+                recordedData = [];
+                lastRecordTime = 0;
+                startTime = 0;
+                pausedTime = 0;
+                
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                [massInput, forceInput, initialVelocityInput, durationInput, dataIntervalInput].forEach(input => {
+                    input.disabled = true;
+                });
+                
+                if (positionChart) {
+                    positionChart.data.labels = [];
+                    positionChart.data.datasets[0].data = [];
+                }
+                if (velocityChart) {
+                    velocityChart.data.labels = [];
+                    velocityChart.data.datasets[0].data = [];
+                }
+                if (forceChart) {
+                    forceChart.data.labels = [];
+                    forceChart.data.datasets[0].data = [];
+                }
+
+                animate();
+            }
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            if (isRunning) {
+                isPaused = !isPaused;
+                if (!isPaused) {
+                    pausedTime = currentTime * 1000;
+                    startTime = 0;
+                    animate();
+                    pauseBtn.innerHTML = '<span class="material-icons">pause</span> Duraklat';
+                } else {
+                    pauseBtn.innerHTML = '<span class="material-icons">play_arrow</span> Devam Et';
+                }
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            isRunning = false;
+            isPaused = false;
+            currentPage = 1; 
+            currentTime = 0;
+            recordedData = [];
+            lastRecordTime = 0;
+            startTime = 0;
+            pausedTime = 0;
+            
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+            
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            pauseBtn.innerHTML = '<span class="material-icons">pause</span> Duraklat';
+            
+            [massInput, forceInput, initialVelocityInput, durationInput, dataIntervalInput].forEach(input => {
+                input.disabled = false;
+            });
+            
+            const values = calculateValues(currentTime);
+            const duration = parseFloat(durationInput.value) || 5;
+            const finalValues = calculateValues(duration);
+            updateCanvas(values.position, finalValues.position); 
+            
+            updateDataDisplay();
+            updateTable();
+            
+            if (positionChart) {
+                positionChart.data.labels = [];
+                positionChart.data.datasets[0].data = [];
+                positionChart.update();
+            }
+            if (velocityChart) {
+                velocityChart.data.labels = [];
+                velocityChart.data.datasets[0].data = [];
+                velocityChart.update();
+            }
+            if (forceChart) {
+                forceChart.data.labels = [];
+                forceChart.data.datasets[0].data = [];
+                forceChart.update();
+            }
+        });
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeIcon.textContent = 'dark_mode';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeIcon.textContent = 'light_mode';
+            }
+            
+            initCharts();
+            
+            const values = calculateValues(currentTime);
+            const duration = parseFloat(durationInput.value) || 5;
+            const finalValues = calculateValues(duration);
+            updateCanvas(values.position, finalValues.position);
+        });
+
+        openTableBtn.addEventListener('click', () => {
+            currentPage = 1;
+            updateTable(); 
+            
+            dataTableModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            dataTableModal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        dataTableModal.addEventListener('click', (e) => {
+            if (e.target === dataTableModal) {
+                dataTableModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && dataTableModal.classList.contains('active')) {
+                dataTableModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.documentElement.classList.add('dark');
+            themeIcon.textContent = 'light_mode';
+        }
+
+        function initializeApp() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            
+            initCharts();
+            const duration = parseFloat(durationInput.value) || 5;
+            const finalValues = calculateValues(duration);
+            updateCanvas(0, finalValues.position); 
+            updateDataDisplay();
+            updateTable();
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+
+        window.addEventListener('resize', () => {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            
+            const values = calculateValues(currentTime);
+            const duration = parseFloat(durationInput.value) || 5;
+            const finalValues = calculateValues(duration);
+            updateCanvas(values.position, finalValues.position);
+            
+            if (positionChart) positionChart.resize();
+            if (velocityChart) velocityChart.resize();
+            if (forceChart) forceChart.resize();
+        });
+
+        [massInput, forceInput, initialVelocityInput, durationInput, dataIntervalInput].forEach(input => {
+            input.addEventListener('change', () => {
+                if (!isRunning) {
+                    updateDataDisplay();
+                    const values = calculateValues(currentTime);
+                    const duration = parseFloat(durationInput.value) || 5;
+                    const finalValues = calculateValues(duration);
+                    updateCanvas(values.position, finalValues.position);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
